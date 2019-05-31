@@ -4,19 +4,19 @@ bool doFTP() {
   Serial.println(F("DO FTP"));
 #endif
 
-  myFile = SD.open(FILENAME, FILE_READ);
+  g_myFile = SD.open(g_dataFileName, FILE_READ);
 
-  if (!myFile) {
+  if (!g_myFile) {
     Serial.println(F("SD open fail"));
     return false;
   }
 
   Serial.println(F("SD opened"));
 
-  if (client.connect(server, 21)) {
+  if (FTP_CLIENT.connect(FTP_SERVER, 21)) {
     Serial.println(F("Command connected"));
   } else {
-    myFile.close();
+    g_myFile.close();
     Serial.println(F("Command connection failed"));
     return false;
   }
@@ -24,12 +24,12 @@ bool doFTP() {
     return false;
   }
 
-  client.println(F("USER arduino"));
+  FTP_CLIENT.println(F("USER arduino"));
   if (!eRcv()) {
     return false;
   }
 
-  client.println(F("PASS arduino"));
+  FTP_CLIENT.println(F("PASS arduino"));
   if (!eRcv()) {
     return false;
   }
@@ -46,17 +46,17 @@ bool doFTP() {
   }
   */
 
-  client.println(F("Type I"));
+  FTP_CLIENT.println(F("Type I"));
   if (!eRcv()) {
     return false;
   }
 
-  client.println(F("PASV"));
+  FTP_CLIENT.println(F("PASV"));
   if (!eRcv()) {
     return false;
   }
 
-  char *tStr = strtok(outBuf, "(,");
+  char *tStr = strtok(g_outBuf, "(,");
   int array_pasv[6];
   for ( int i = 0; i < 6; i++) {
     tStr = strtok(NULL, "(,");
@@ -74,19 +74,19 @@ bool doFTP() {
   Serial.println(hiPort);
 #endif
 
-  if (dclient.connect(server, hiPort)) {
+  if (FTP_PASSIVE_CLIENT.connect(FTP_SERVER, hiPort)) {
     Serial.println(F("Data connected"));
   } else {
     Serial.println(F("Data connection failed"));
-    client.stop();
-    myFile.close();
+    FTP_CLIENT.stop();
+    g_myFile.close();
     return false;
   }
 
-  client.print(F("STOR "));
-  client.println(FILENAME);
+  FTP_CLIENT.print(F("STOR "));
+  FTP_CLIENT.println(g_dataFileName);
   if (!eRcv()) {
-    dclient.stop();
+    FTP_PASSIVE_CLIENT.stop();
     return false;
   }
 
@@ -98,12 +98,12 @@ bool doFTP() {
   int nbBuf = 0;
 #endif
 
-  while (myFile.available()) {
-    clientBuf[clientCount] = myFile.read();
+  while (g_myFile.available()) {
+    clientBuf[clientCount] = g_myFile.read();
     clientCount++;
 
     if (clientCount > 63) {
-      dclient.write(clientBuf, 64);
+      FTP_PASSIVE_CLIENT.write(clientBuf, 64);
       clientCount = 0;
 
 #ifdef DEBUG
@@ -115,25 +115,25 @@ bool doFTP() {
   }
 
   if (clientCount > 0) {
-    dclient.write(clientBuf, clientCount);
+    FTP_PASSIVE_CLIENT.write(clientBuf, clientCount);
   }
 
-  dclient.stop();
+  FTP_PASSIVE_CLIENT.stop();
   Serial.println(F("Data disconnected"));
   if (!eRcv()) {
     return false;
   }
 
-  client.println(F("QUIT"));
+  FTP_CLIENT.println(F("QUIT"));
 
   if (!eRcv()) {
     return false;
   }
 
-  client.stop();
+  FTP_CLIENT.stop();
   Serial.println(F("Command disconnected"));
 
-  myFile.close();
+  g_myFile.close();
   Serial.println(F("Close"));
 
   return true;
@@ -143,22 +143,22 @@ bool eRcv() {
   byte respCode;
   byte thisByte;
 
-  while (!client.available()) {
+  while (!FTP_CLIENT.available()) {
     delay(1);
   }
 
-  respCode = client.peek();
+  respCode = FTP_CLIENT.peek();
 
-  outCount = 0;
+  byte outCount = 0;
 
-  while (client.available()) {
-    thisByte = client.read();
+  while (FTP_CLIENT.available()) {
+    thisByte = FTP_CLIENT.read();
     Serial.write(thisByte);
 
     if (outCount < 127) {
-      outBuf[outCount] = thisByte;
+      g_outBuf[outCount] = thisByte;
       outCount++;
-      outBuf[outCount] = 0;
+      g_outBuf[outCount] = 0;
     }
   }
 
@@ -174,20 +174,20 @@ bool eRcv() {
 void efail() {
   byte thisByte = 0;
 
-  client.println(F("QUIT"));
+  FTP_CLIENT.println(F("QUIT"));
 
-  while (!client.available()) {
+  while (!FTP_CLIENT.available()) {
     delay(1);
   }
 
-  while (client.available()) {
-    thisByte = client.read();
+  while (FTP_CLIENT.available()) {
+    thisByte = FTP_CLIENT.read();
     Serial.write(thisByte);
   }
 
-  client.stop();
+  FTP_CLIENT.stop();
   Serial.println(F("FAIL - Command disconnected"));
   
-  myFile.close();
+  g_myFile.close();
   Serial.println(F("Close"));
 }

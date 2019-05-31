@@ -1,36 +1,13 @@
 void loop() {
   unsigned long currentTime = millis();
 
-  if (currentTime - lastTime >= DELAY_SAVE_DATA) {
+  if (currentTime - g_lastTime >= DELAY_SAVE_DATA) {
 
 #ifdef DEBUG
-    Serial.println(currentTime - lastTime);
+    Serial.println(currentTime - g_lastTime);
 #endif
-    lastTime = currentTime;
-
-    if (writeData()) {
-      ++nbData;
-
-#ifdef DEBUG
-      Serial.print(F("nbDATA "));
-      Serial.println(nbData);
-#endif
-
-      if (nbData >= NB_DATA) {
-
-#ifdef DEBUG
-        Serial.print(F("*** NB_DATA "));
-        Serial.println(nbData);
-#endif
-
-        if (doFTP()) {
-          newFilename();
-          nbData = 0;
-        } else {
-          Serial.println(F("FTP ERROR NB_DATA"));
-        }
-      }
-    }
+    g_lastTime = currentTime;
+    doWriteData();
   }
 
   if (Serial.available() > 0) {
@@ -44,14 +21,16 @@ void loop() {
 #endif
 
     switch (incomingByte) {
-      case 'D':
-      case 'd':
+      /*
+        case 'D':
+        case 'd':
         deleteDataFile();
         break;
+      */
 
       case 'g':
       case 'G':
-        writeData();
+        doWriteData();
         break;
 
       case 'p':
@@ -70,7 +49,10 @@ void loop() {
       case 'f':
       case 'F':
         if (doFTP()) {
-          newFilename();
+          //newFilename();
+#ifdef DEBUG
+          Serial.println(F("FTP OK"));
+#endif
         } else {
           Serial.println(F("FTP ERROR"));
         }
@@ -80,7 +62,16 @@ void loop() {
       case 'Z':
         delay(1200);
         break;
+
+      case 'w':
+      case 'W':
+        newIndex();
+        break;
+
+      case 'r':
+      case 'R':
+        readIndex();
+        break;
     }
   }
-
 }
