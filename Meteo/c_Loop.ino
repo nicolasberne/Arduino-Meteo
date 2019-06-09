@@ -20,14 +20,7 @@ void loop() {
     }
 #endif
 
-    switch (incomingByte) {
-      /*
-        case 'D':
-        case 'd':
-        deleteDataFile();
-        break;
-      */
-
+    switch (incomingByte)  {
       case 'g':
       case 'G':
         doWriteData();
@@ -49,7 +42,7 @@ void loop() {
       case 'f':
       case 'F':
         if (doFTP()) {
-          //newFilename();
+          
 #ifdef DEBUG
           Serial.println(F("FTP OK"));
 #endif
