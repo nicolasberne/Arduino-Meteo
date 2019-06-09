@@ -10,13 +10,27 @@ bool doFTP() {
     Serial.println(F("SD open fail"));
     return false;
   }
-
+  
+#ifdef DEBUG
   Serial.println(F("SD opened"));
+#endif
+
+  bool ret = doFTP_bis();
+
+  g_myFile.close();
+
+#ifdef DEBUG
+  Serial.println(F("Close"));
+#endif
+
+  return ret;
+}
+
+bool doFTP_bis() {
 
   if (FTP_CLIENT.connect(FTP_SERVER, 21)) {
     Serial.println(F("Command connected"));
   } else {
-    g_myFile.close();
     Serial.println(F("Command connection failed"));
     return false;
   }
@@ -24,6 +38,15 @@ bool doFTP() {
     return false;
   }
 
+  bool ret = doFTP_ter();
+
+  FTP_CLIENT.stop();
+  Serial.println(F("Command disconnected"));
+  
+  return ret;
+}
+
+bool doFTP_ter() {
   FTP_CLIENT.println(F("USER arduino"));
   if (!eRcv()) {
     return false;
@@ -33,18 +56,6 @@ bool doFTP() {
   if (!eRcv()) {
     return false;
   }
-
-  //client.println(F("CWD upload"));
-  //if (!eRcv()) {
-  //  return false;
-  //}
-
-  /* INUTILE...
-  client.println(F("SYST"));
-  if (!eRcv()) {
-    return false;
-  }
-  */
 
   FTP_CLIENT.println(F("Type I"));
   if (!eRcv()) {
@@ -78,8 +89,6 @@ bool doFTP() {
     Serial.println(F("Data connected"));
   } else {
     Serial.println(F("Data connection failed"));
-    FTP_CLIENT.stop();
-    g_myFile.close();
     return false;
   }
 
@@ -94,7 +103,7 @@ bool doFTP() {
   int clientCount = 0;
 
 #ifdef DEBUG
-  Serial.println(F("Writing"));
+  Serial.println(F("SEND DATA"));
   int nbBuf = 0;
 #endif
 
@@ -125,17 +134,10 @@ bool doFTP() {
   }
 
   FTP_CLIENT.println(F("QUIT"));
-
   if (!eRcv()) {
     return false;
   }
-
-  FTP_CLIENT.stop();
-  Serial.println(F("Command disconnected"));
-
-  g_myFile.close();
-  Serial.println(F("Close"));
-
+  
   return true;
 }
 
@@ -187,7 +189,7 @@ void efail() {
 
   FTP_CLIENT.stop();
   Serial.println(F("FAIL - Command disconnected"));
-  
+
   g_myFile.close();
   Serial.println(F("Close"));
 }
