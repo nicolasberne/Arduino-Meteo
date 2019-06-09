@@ -31,7 +31,6 @@ void setup() {
 #endif
 
   readIndex();
-  //newFilenameByIndex();
   g_nbData = getDataFileSize() / BYTES_LINE;
   
 #ifdef DEBUG
