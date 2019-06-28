@@ -27,11 +27,8 @@ EthernetUDP NTP_UDP;
 
 unsigned long g_lastTime;
 
-//const unsigned long SECONDS_BETWEEN_1900_2019 = 3755289600UL; // (119*365 + 29) * 86400
-
 const unsigned long DELAY_SAVE_DATA = 2ul * 60ul * 1000ul;
 const int NB_DATA = 30;
-//const unsigned long NTP_SECONDS_DIVISOR = 3600; 
 int g_nbData;
 
 const int DELAY_NTP = 500;
